@@ -6,6 +6,7 @@ orbs:
 
 jobs:
   build_and_test:
+    working_directory: ./backend
     executor:
       name: go/default
       tag: '1.24'
