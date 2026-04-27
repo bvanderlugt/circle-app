@@ -1,21 +1,16 @@
 version: 2.1
 
+setup: true
+
 orbs:
-  go: circleci/go@3.0.4
-
-
-jobs:
-  build_and_test:
-    working_directory: ./backend
-    executor:
-      name: go/default
-      tag: '1.24'
-    steps:
-      - checkout
-      - go/mod-download
-      - go/test
+  path-filtering: circleci/path-filtering@1
 
 workflows:
-  main:
+  always-run:
     jobs:
-      - build_and_test
+      - path-filtering/filter:
+          name: check-updated-files
+          mapping: |
+            backend/.* run_backend_build_and_test true
+          base-revision: main
+          config-path: .circleci/continue_config.yml
