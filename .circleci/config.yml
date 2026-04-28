@@ -5,12 +5,25 @@ setup: true
 orbs:
   path-filtering: circleci/path-filtering@1
 
+# DEBUG
+jobs:
+  debug_job:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run: "pwd"
+      - run: "ls -la"
+      - run: "cd backend"
+      - run: "ls -la"
+
 workflows:
   always-run:
     jobs:
-      - path-filtering/filter:
-          name: check-updated-files
-          mapping: |
-            backend/.* run_backend_build_and_test true
-          base-revision: main
-          config-path: .circleci/continue_config.yml
+      - debug_job
+      # - path-filtering/filter:
+      #     name: check-updated-files
+      #     mapping: |
+      #       backend/.* run_backend_build_and_test true
+      #     base-revision: main
+      #     config-path: .circleci/continue_config.yml
