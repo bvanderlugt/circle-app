@@ -3,7 +3,7 @@ version: 2.1
 setup: true
 
 orbs:
-  path-filtering: circleci/path-filtering@1
+  path-filtering: circleci/path-filtering@3.0.0
 
 # DEBUG
 jobs:
@@ -14,8 +14,9 @@ jobs:
       - checkout
       - run: "pwd"
       - run: "ls -la"
-      - run: "cd backend"
-      - run: "ls -la"
+      - run: "cd backend && ls -la"
+      - run: |
+          [[ -f "./go.mod" ]] && echo "found go.mod" || [[ echo "go.mod not found :(" && exit 1 ]]
   debug_job2:
     docker:
       - image: cimg/base:stable
@@ -26,16 +27,20 @@ jobs:
       - run: "ls -la"
       - run: "cd backend"
       - run: "ls -la"
+      - run: |
+          [[ -f "./go.mod" ]] && echo "found go.mod" || [[ echo "go.mod not found :(" && exit 1 ]]
   debug_job3:
     docker:
       - image: cimg/base:stable
-    working_directory: ~/backend
+    working_directory: ./backend
     steps:
       - checkout
       - run: "pwd"
       - run: "ls -la"
       - run: "cd backend"
       - run: "ls -la"
+      - run: |
+          [[ -f "./go.mod" ]] && echo "found go.mod" || [[ echo "go.mod not found :(" && exit 1 ]]
   debug_job4:
     docker:
       - image: cimg/base:stable
@@ -46,7 +51,7 @@ jobs:
       - run: "pwd"
       - run: "ls -la"
       - run: |
-          [[ -f "./go.mod" ]] && echo "found go.mod" || echo "go.mod not found :("
+          [[ -f "./go.mod" ]] && echo "found go.mod" || [[ echo "go.mod not found :(" && exit 1 ]]
 
 workflows:
   always-run:
@@ -55,9 +60,9 @@ workflows:
       - debug_job2
       - debug_job3
       - debug_job4
-      # - path-filtering/filter:
-      #     name: check-updated-files
-      #     mapping: |
-      #       backend/.* run_backend_build_and_test true
-      #     base-revision: main
-      #     config-path: .circleci/continue_config.yml
+      - path-filtering/filter:
+          name: check-updated-files
+          mapping: |
+            .* run_backend_build_and_test true
+          base-revision: main
+          config-path: .circleci/continue_config.yml
