@@ -36,6 +36,16 @@ jobs:
       - run: "ls -la"
       - run: "cd backend"
       - run: "ls -la"
+  debug_job4:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/backend
+    steps:
+      - checkout:
+          path: ~/circle-app
+      - run: "pwd"
+      - run: "ls -la"
+      - run: [[ -f "./go.mod" && "found go.mod" ]] || echo "go.mod not found :("
 
 workflows:
   always-run:
