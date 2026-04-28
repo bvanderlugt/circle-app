@@ -13,7 +13,7 @@ func TestValidateName(t *testing.T) {
 		want    string
 		wantErr error
 	}{
-		{"simple", "alpha", "alpha", nil},
+		{"simple", "beta", "beta", nil},
 		{"trims surrounding whitespace", "  alpha  ", "alpha", nil},
 		{"unicode passes", "Círculo", "Círculo", nil},
 		{"exact max length", strings.Repeat("a", 50), strings.Repeat("a", 50), nil},
