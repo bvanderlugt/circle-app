@@ -7,9 +7,29 @@ orbs:
 
 # DEBUG
 jobs:
-  debug_job:
+  debug_job1:
     docker:
       - image: cimg/base:stable
+    steps:
+      - checkout
+      - run: "pwd"
+      - run: "ls -la"
+      - run: "cd backend"
+      - run: "ls -la"
+  debug_job2:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout:
+          path: ~/backend
+      - run: "pwd"
+      - run: "ls -la"
+      - run: "cd backend"
+      - run: "ls -la"
+  debug_job3:
+    docker:
+      - image: cimg/base:stable
+    working_directory: ~/backend
     steps:
       - checkout
       - run: "pwd"
@@ -20,7 +40,9 @@ jobs:
 workflows:
   always-run:
     jobs:
-      - debug_job
+      - debug_job1
+      - debug_job2
+      - debug_job3
       # - path-filtering/filter:
       #     name: check-updated-files
       #     mapping: |
