@@ -39,10 +39,10 @@ jobs:
   debug_job4:
     docker:
       - image: cimg/base:stable
-    working_directory: ~/backend
+    working_directory: ~/circle-app/backend
     steps:
       - checkout:
-          path: ~/circle-app
+          path: ~/backend
       - run: "pwd"
       - run: "ls -la"
       - run: |
