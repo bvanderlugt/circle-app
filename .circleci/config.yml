@@ -45,7 +45,8 @@ jobs:
           path: ~/circle-app
       - run: "pwd"
       - run: "ls -la"
-      - run: [[ -f "./go.mod" && "found go.mod" ]] || echo "go.mod not found :("
+      - run: |
+          [[ -f "./go.mod" ]] && echo "found go.mod" || echo "go.mod not found :("
 
 workflows:
   always-run:
