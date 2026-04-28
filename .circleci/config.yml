@@ -54,6 +54,7 @@ workflows:
       - debug_job1
       - debug_job2
       - debug_job3
+      - debug_job4
       # - path-filtering/filter:
       #     name: check-updated-files
       #     mapping: |
