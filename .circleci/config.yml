@@ -42,11 +42,11 @@ jobs:
     working_directory: ~/circle-app/backend
     steps:
       - checkout:
-          path: ~/backend
+          path: ~/circle-app
       - run: "pwd"
       - run: "ls -la"
       - run: |
-          [[ -f "./go.mod" ]] && echo "found go.mod" || echo "go.mod not found :("
+          [[ -f "./go.mod" ]] && echo "found go.mod" || echo "go.mod not found :(" && exit 1
 
 workflows:
   always-run:
