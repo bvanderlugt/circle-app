@@ -39,6 +39,8 @@ commands:
                 --output-file="<< parameters.gcp_cred_config_file_path >>" \
                 --service-account="${<< parameters.service_account_email >>}" \
                 --credential-source-file=<< parameters.oidc_token_file_path >>
+      - run:
+          command: cat /home/circleci/gcp_cred_config.json
 
   gcp-oidc-authenticate:
     description: "Authenticate with GCP using a GCP credentials file."
