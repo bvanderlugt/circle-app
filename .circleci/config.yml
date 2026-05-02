@@ -42,7 +42,13 @@ commands:
       - run:
           command: cat /home/circleci/gcp_cred_config.json
       - run:
-          command: cat /home/circleci/oidc_token.json
+          name: Debug OIDC token
+          command: |
+            echo "Token file contents:"
+            cat /home/circleci/oidc_token.json
+            echo ""
+            echo "Decoded payload:"
+            cat /home/circleci/oidc_token.json | cut -d. -f2 | base64 -d 2>/dev/null || echo "decode  failed"
 
   gcp-oidc-authenticate:
     description: "Authenticate with GCP using a GCP credentials file."
