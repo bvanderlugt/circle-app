@@ -64,7 +64,7 @@ jobs:
       - run:
           name: Verify that gcloud is authenticated
           environment:
-            GCP_SERVICE_ACCOUNT_EMAIL: << parameters.service_account_email >>
+            GCP_SERVICE_ACCOUNT_EMAIL: jennings-oidc-test@makoto-workbench.iam.gserviceaccount.com
           command: gcloud iam service-accounts get-iam-policy "${GCP_SERVICE_ACCOUNT_EMAIL}"
 
 workflows:
