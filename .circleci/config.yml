@@ -31,24 +31,12 @@ commands:
     steps:
       - run:
           command: |
-            # Store OIDC token in temp file
             echo $CIRCLE_OIDC_TOKEN > << parameters.oidc_token_file_path >>
-            # Create a credential configuration for the generated OIDC ID Token
             gcloud iam workload-identity-pools create-cred-config \
                 "projects/${<< parameters.project_id >>}/locations/global/workloadIdentityPools/${<< parameters.workload_identity_pool_id >>}/providers/${<< parameters.workload_identity_pool_provider_id >>}"\
                 --output-file="<< parameters.gcp_cred_config_file_path >>" \
                 --service-account="${<< parameters.service_account_email >>}" \
                 --credential-source-file=<< parameters.oidc_token_file_path >>
-      - run:
-          command: cat /home/circleci/gcp_cred_config.json
-      - run:
-          name: Debug OIDC token
-          command: |
-            echo "Token file contents:"
-            cat /home/circleci/oidc_token.json
-            echo ""
-            echo "Decoded payload:"
-            cat /home/circleci/oidc_token.json | cut -d. -f2 | base64 -d 2>/dev/null || echo "decode  failed"
 
   gcp-oidc-authenticate:
     description: "Authenticate with GCP using a GCP credentials file."
@@ -65,25 +53,32 @@ commands:
             echo "export GOOGLE_APPLICATION_CREDENTIALS='<< parameters.gcp_cred_config_file_path >>'" | tee -a "$BASH_ENV"
 
 jobs:
-  gcp-oidc-defaults:
+  docker-build-and-push:
     executor: gcp-cli/default
     steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
       - gcp-cli/install
       - gcp-oidc-generate-cred-config-file
       - gcp-oidc-authenticate
       - run:
-          name: Verify that gcloud is authenticated
-          environment:
-            GCP_SERVICE_ACCOUNT_EMAIL: jennings-oidc-test@makoto-workbench.iam.gserviceaccount.com
-          command: gcloud iam service-accounts get-iam-policy "${GCP_SERVICE_ACCOUNT_EMAIL}"
+          name: Configure Docker for Artifact Registry
+          command: gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+      - run:
+          name: Build and push Docker image
+          command: |
+            IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/app"
+            docker build -t "${IMAGE}:${CIRCLE_SHA1}" -t "${IMAGE}:latest" .
+            docker push "${IMAGE}:${CIRCLE_SHA1}"
+            docker push "${IMAGE}:latest"
 
 workflows:
   main:
     jobs:
-      - gcp-oidc-defaults:
-          name: Generate Creds File and Authenticate
+      - docker-build-and-push:
           context:
-          - circle-app
+            - circle-app
   # always-run:
   #   jobs:
   #     - path-filtering/filter:
