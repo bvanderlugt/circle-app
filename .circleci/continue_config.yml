@@ -18,7 +18,16 @@ jobs:
       - checkout:
           path: ~/circle-app
       - go/mod-download
-      - go/test
+      - run:
+          name: Install gotestsum
+          command: go install gotest.tools/gotestsum@latest
+      - run:
+          name: Run tests
+          command: |
+            mkdir -p /tmp/test-results
+            gotestsum --junitfile /tmp/test-results/report.xml ./...
+      - store_test_results:
+          path: /tmp/test-results
 
 workflows:
   backend:
