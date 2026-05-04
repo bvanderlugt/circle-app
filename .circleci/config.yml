@@ -53,6 +53,22 @@ commands:
             echo "export GOOGLE_APPLICATION_CREDENTIALS='<< parameters.gcp_cred_config_file_path >>'" | tee -a "$BASH_ENV"
 
 jobs:
+  smoke-test:
+    machine:
+      image: ubuntu-2204:current
+    steps:
+      - checkout
+      - run:
+          name: Start stack
+          command: docker compose up -d --quiet-build
+      - run:
+          name: Run smoke tests
+          command: bash scripts/smoke-test.sh
+      - run:
+          name: Tear down stack
+          when: always
+          command: docker compose down
+
   docker-build-and-push:
     executor: gcp-cli/default
     steps:
@@ -74,6 +90,11 @@ jobs:
             docker push "${IMAGE}:latest"
 
 workflows:
+  pull-request:
+    when: pipeline.event.name == "pull_request" and pipeline.event.github.pull_request.draft == false
+    jobs:
+      - smoke-test
+
   main:
     jobs:
       - docker-build-and-push:
