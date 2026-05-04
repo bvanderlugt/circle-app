@@ -66,10 +66,6 @@ jobs:
           name: Configure Docker for Artifact Registry
           command: gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
       - run:
-          name: Debug image path
-          command: |
-            echo "${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/app" | base64
-      - run:
           name: Build and push Docker image
           command: |
             IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/app"
@@ -83,11 +79,14 @@ workflows:
       - docker-build-and-push:
           context:
             - circle-app
-  # always-run:
-  #   jobs:
-  #     - path-filtering/filter:
-  #         name: check-updated-files
-  #         mapping: |
-  #           backend/.* run_backend_build_and_test true
-  #         base-revision: main
-  #         config-path: .circleci/continue_config.yml
+          filters:
+            branches:
+              only: main
+  always-run:
+    jobs:
+      - path-filtering/filter:
+          name: check-updated-files
+          mapping: |
+            backend/.* run_backend_build_and_test true
+          base-revision: main
+          config-path: .circleci/continue_config.yml
