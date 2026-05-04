@@ -4,8 +4,84 @@ setup: true
 
 orbs:
   path-filtering: circleci/path-filtering@3.0.0
+  gcp-cli: circleci/gcp-cli@2.4.1
+
+commands:
+  gcp-oidc-generate-cred-config-file:
+    description: "Authenticate with GCP using a CircleCI OIDC token."
+    parameters:
+      project_number:
+        type: env_var_name
+        default: GCP_PROJECT_NUMBER
+      workload_identity_pool_id:
+        type: env_var_name
+        default: GCP_WIP_ID
+      workload_identity_pool_provider_id:
+        type: env_var_name
+        default: GCP_WIP_PROVIDER_ID
+      service_account_email:
+        type: env_var_name
+        default: GCP_SERVICE_ACCOUNT_EMAIL
+      gcp_cred_config_file_path:
+        type: string
+        default: /home/circleci/gcp_cred_config.json
+      oidc_token_file_path:
+        type: string
+        default: /home/circleci/oidc_token.json
+    steps:
+      - run:
+          command: |
+            echo $CIRCLE_OIDC_TOKEN > << parameters.oidc_token_file_path >>
+            gcloud iam workload-identity-pools create-cred-config \
+                "projects/${<< parameters.project_number >>}/locations/global/workloadIdentityPools/${<< parameters.workload_identity_pool_id >>}/providers/${<< parameters.workload_identity_pool_provider_id >>}"\
+                --output-file="<< parameters.gcp_cred_config_file_path >>" \
+                --service-account="${<< parameters.service_account_email >>}" \
+                --credential-source-file=<< parameters.oidc_token_file_path >>
+
+  gcp-oidc-authenticate:
+    description: "Authenticate with GCP using a GCP credentials file."
+    parameters:
+      gcp_cred_config_file_path:
+        type: string
+        default: /home/circleci/gcp_cred_config.json
+    steps:
+      - run:
+          command: |
+            # Configure gcloud to leverage the generated credential configuration
+            gcloud auth login --brief --cred-file "<< parameters.gcp_cred_config_file_path >>"
+            # Configure ADC
+            echo "export GOOGLE_APPLICATION_CREDENTIALS='<< parameters.gcp_cred_config_file_path >>'" | tee -a "$BASH_ENV"
+
+jobs:
+  docker-build-and-push:
+    executor: gcp-cli/default
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - gcp-cli/install
+      - gcp-oidc-generate-cred-config-file
+      - gcp-oidc-authenticate
+      - run:
+          name: Configure Docker for Artifact Registry
+          command: gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+      - run:
+          name: Build and push Docker image
+          command: |
+            IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_AR_REPO}/app"
+            docker build -t "${IMAGE}:${CIRCLE_SHA1}" -t "${IMAGE}:latest" .
+            docker push "${IMAGE}:${CIRCLE_SHA1}"
+            docker push "${IMAGE}:latest"
 
 workflows:
+  main:
+    jobs:
+      - docker-build-and-push:
+          context:
+            - circle-app
+          filters:
+            branches:
+              only: main
   always-run:
     jobs:
       - path-filtering/filter:
